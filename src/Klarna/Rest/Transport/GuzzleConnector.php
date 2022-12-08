@@ -22,11 +22,10 @@ namespace Klarna\Rest\Transport;
 use GuzzleHttp\Client;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\Exception\ClientException;
-use GuzzleHttp\Exception\TransportException;
 use GuzzleHttp\Psr7\Request;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use RuntimeException;
 
 /**
  * Transport connector used to authenticate and make HTTP requests against the
@@ -87,7 +86,7 @@ class GuzzleConnector implements ConnectorInterface
         $this->sharedSecret = $sharedSecret;
 
         if ($userAgent === null) {
-            $userAgent = UserAgent::createDefault(['Guzzle/' . ClientInterface::VERSION]);
+            $userAgent = UserAgent::createDefault(['Guzzle/' . ClientInterface::MAJOR_VERSION]);
         }
         $this->userAgent = $userAgent;
     }
@@ -178,8 +177,8 @@ class GuzzleConnector implements ConnectorInterface
 
     /**
      * Converts ResponseInterface to ApiResponse.
+     * @param ResponseInterface $response
      *
-     * @param response ResponseInterface intance
      * @return ApiResponse
      */
     protected function getApiResponse(ResponseInterface $response)
@@ -214,7 +213,7 @@ class GuzzleConnector implements ConnectorInterface
      * @param string[] $options Request options
      *
      * @throws RequestException   When an error is encountered
-     * @throws \RuntimeException  When the adapter does not populate a response
+     * @throws RuntimeException  When the adapter does not populate a response
      *
      * @return ResponseInterface
      */
@@ -228,8 +227,7 @@ class GuzzleConnector implements ConnectorInterface
         $options['http_errors'] = false;
 
         try {
-            $response = $this->client->send($request, $options);
-            return $response;
+            return $this->client->send($request, $options);
         } catch (RequestException $e) {
             throw new \RuntimeException($e->getMessage(), $e->getCode(), $e);
         } catch (\Throwable $e) {
